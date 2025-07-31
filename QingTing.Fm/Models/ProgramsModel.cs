@@ -32,8 +32,15 @@ namespace QingTing.Fm.Models
         /// <summary>
         /// 节目地址
         /// </summary>
-        [JsonProperty("file_path")]
-        public string FilePath { get; set; }
+
+        public string FilePath
+        {
+            get
+            {
+                return $"https://audio.qtfm.cn/audiostream/redirect/239329/{Id}?access_token=&device_id=MOBILESITE&qingting_id=&t=1753885375531&sign=5ee6829dd3d72d212860fd6771d13158";
+            }
+        }
+
         /// <summary>
         /// 节目播放量(点播总量)
         /// </summary>
@@ -59,6 +66,19 @@ namespace QingTing.Fm.Models
         /// </summary>
         [JsonProperty("desc")]
         public string Desc { get; set; }
+        /// <summary>
+        /// 介绍
+        /// </summary>
+        [JsonProperty("isfree")]
+        public bool IsFree { get; set; }
+
+        public bool Charge
+        {
+            get 
+            { 
+                return !IsFree; 
+            }
+        }
         /// <summary>
         /// 主播
         /// </summary>

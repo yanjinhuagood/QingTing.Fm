@@ -38,10 +38,8 @@ namespace QingTing.Fm.Views
             set { SetValue(PageCountPropertyProperty, value); }
         }
 
-        // Using a DependencyProperty as the backing store for PageCountProperty.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty PageCountPropertyProperty =
             DependencyProperty.Register("PageCountProperty", typeof(int), typeof(PageControl), new PropertyMetadata(0));
-        //int pageIndex = 1, maxPageInterval=5;
 
         /// <summary>
         /// 当前页
@@ -52,7 +50,6 @@ namespace QingTing.Fm.Views
             set { SetValue(PageIndexPropertyProperty, value); }
         }
 
-        // Using a DependencyProperty as the backing store for PageIndexProperty.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty PageIndexPropertyProperty =
             DependencyProperty.Register("PageIndexProperty", typeof(int), typeof(PageControl), new PropertyMetadata(0));
 
@@ -84,8 +81,6 @@ namespace QingTing.Fm.Views
         public PageControl()
         {
             InitializeComponent();
-            //PageIndexProperty = 1;
-            //PageCountProperty = 30;
             NextPageEvent = EventManager.RegisterRoutedEvent("NextPage", RoutingStrategy.Direct, typeof(RoutedEventHandler), typeof(PageControl));
             this.Loaded += PageControl_Loaded;
         }

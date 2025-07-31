@@ -1,22 +1,19 @@
-﻿using MaterialDesignThemes.Wpf;
-using NAudio.Wave;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using QingTing.Fm.Helpers;
+﻿using NAudio.Wave;
 using QingTing.Fm.Models;
 using QingTing.Fm.Service;
 using QingTing.Fm.Utility;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using WPFDevelopers.Controls;
+using WPFDevelopers.Helpers;
 
 namespace QingTing.Fm.ViewModels
 {
@@ -27,27 +24,23 @@ namespace QingTing.Fm.ViewModels
         #endregion
 
         #region 字段
-        private IWavePlayer wavePlayer;
-        private WaveStream reader;
-        private readonly DispatcherTimer timer = new DispatcherTimer();
-        private string lastPlayed;
-        private string inputPath;
-        private double sliderPosition;
-        ProgramsModel pModel;
-        int currentNumber = 0;
-        HttpProgram http;
-        int programCount, pageCount;
-        int pageIndex = 1;
+        private IWavePlayer _wavePlayer;
+        private WaveStream _reader;
+        private readonly DispatcherTimer _timer;
+        private string _lastPlayed;
+        private string _inputPath;
+        private double _sliderPosition;
+        private int _currentNumber = 0;
+        private string _lastTempFilePath = null;
         #endregion
 
         #region 构造函数
         public HomeViewModel()
         {
-            //HttpHelper.GetWebAsync("https://i.qingting.fm/wapi/channels/239329/programs/page/1/pagesize/10");
-            http = new HttpProgram();
-            timer.Interval = TimeSpan.FromMilliseconds(500);
-            timer.Tick += TimerOnTick;
-            StartProgramTask(pageIndex);
+            _timer = new DispatcherTimer();
+            _timer.Interval = TimeSpan.FromMilliseconds(500);
+            _timer.Tick += TimerOnTick;
+            StartProgramTask(1);
         }
 
         #endregion
@@ -112,18 +105,36 @@ namespace QingTing.Fm.ViewModels
                 OnPropertyChanged(nameof(Channels));
             }
         }
-        public double SliderPosition
+
+        private ProgramsModel _podcaster;
+        /// <summary>
+        /// 当前播放
+        /// </summary>
+        public ProgramsModel Podcaster
         {
-            get => sliderPosition;
+            get
+            {
+                return _podcaster;
+            }
             set
             {
-                if (sliderPosition != value)
+                _podcaster = value;
+                OnPropertyChanged(nameof(Podcaster));
+            }
+        }
+
+        public double SliderPosition
+        {
+            get => _sliderPosition;
+            set
+            {
+                if (_sliderPosition != value)
                 {
-                    sliderPosition = value;
-                    if (reader != null)
+                    _sliderPosition = value;
+                    if (_reader != null)
                     {
-                        var pos = (long)(reader.Length * sliderPosition / SliderMax);
-                        reader.Position = pos; // media foundation will worry about block align for us
+                        var pos = (long)(_reader.Length * _sliderPosition / SliderMax);
+                        _reader.Position = pos; // media foundation will worry about block align for us
                     }
                     OnPropertyChanged("SliderPosition");
                 }
@@ -202,80 +213,37 @@ namespace QingTing.Fm.ViewModels
             }
         }
 
-        public bool _isLoginBusy;
-        /// <summary>
-        /// 消息是否loading
-        /// </summary>
-        public bool IsLoginBusy
+        private int _count;
+        public int Count
         {
-            get
-            {
-                return _isLoginBusy;
-            }
-            set
-            {
-                _isLoginBusy = value;
-                OnPropertyChanged(nameof(IsLoginBusy));
+            get { return _count; }
+            set 
+            { 
+                _count = value; 
+                OnPropertyChanged(nameof(Count));  
             }
         }
 
-        /// <summary>
-        /// 提示消息
-        /// </summary>
-        private string _cessage;
-        /// <summary>
-        /// 提示消息
-        /// </summary>
-        public string Message
+        private int _countPerPage = 30;
+        public int CountPerPage
         {
-            get { return _cessage; }
-            set
-            {
-                if (value != _cessage)
-                {
-                    _cessage = value;
-                    OnPropertyChanged(nameof(Message));
-                }
+            get { return _countPerPage; }
+            set 
+            { 
+                _countPerPage = value; 
+                OnPropertyChanged(nameof(CountPerPage));
             }
         }
 
-        /// <summary>
-        /// 当前页
-        /// </summary>
-        private int _pageIndexProperty;
-        /// <summary>
-        /// 当前页
-        /// </summary>
-        public int PageIndexProperty
+        private int _current = 1;
+        public int Current
         {
-            get { return _pageIndexProperty; }
-            set
-            {
-                if (value != _pageIndexProperty)
-                {
-                    _pageIndexProperty = value;
-                    OnPropertyChanged(nameof(PageIndexProperty));
-                }
-            }
-        }
-
-        /// <summary>
-        /// 总页
-        /// </summary>
-        private int _pageCountProperty;
-        /// <summary>
-        /// 总页
-        /// </summary>
-        public int PageCountProperty
-        {
-            get { return _pageCountProperty; }
-            set
-            {
-                if (value != _pageCountProperty)
-                {
-                    _pageCountProperty = value;
-                    OnPropertyChanged(nameof(PageCountProperty));
-                }
+            get { return _current; }
+            set 
+            { 
+                _current = value; 
+                OnPropertyChanged(nameof(Current));
+                StartProgramTask(Current);
             }
         }
 
@@ -313,40 +281,13 @@ namespace QingTing.Fm.ViewModels
             Stop();
             App.Current.MainWindow.Close();
         });
-        /// <summary>
-        /// 双击播放
-        /// </summary>
-        //public ICommand MouseDoubleCommand => new DelegateCommand(obj =>
-        //{
-        //    if (obj != null)
-        //    {
-        //        if (pModel != obj as ProgramsModel)
-        //        {
-        //            if (pModel!=null)
-        //            {
-        //                pModel.IsPlay = false;
-        //            }
-        //            pModel = obj as ProgramsModel;
-        //            if (!string.IsNullOrEmpty(pModel.FilePath))
-        //            {
-        //                Stop();
-        //                Programs.All(y => y.IsPlay = false);
-        //                pModel.IsPlay = true;
-        //                inputPath = string.Format("https://od.qingting.fm/{0}", pModel.FilePath);
-        //                Play();
-        //            }
-
-        //        }
-
-        //    }
-        //});
 
         /// <summary>
         /// 播放
         /// </summary>
         public ICommand PlayCommand => new DelegateCommand(obj =>
         {
-            PlayMethod();
+            PlayMethodAsync();
         });
 
         /// <summary>
@@ -363,23 +304,19 @@ namespace QingTing.Fm.ViewModels
         /// </summary>
         public ICommand MouseDoubleCommand => new DelegateCommand(obj =>
         {
-            PlayMethod((int)obj);
+            PlayMethodAsync();
         });
         /// <summary>
         /// 上
         /// </summary>
         public ICommand SkipSongCommand => new DelegateCommand(obj =>
         {
-            //currentNumber = currentNumber == 0 ? Programs.Count - 1 : currentNumber--;
-            if (currentNumber == 0)
-            {
-                currentNumber = Programs.Count - 1;
-            }
+            if (_currentNumber == 0)
+                _currentNumber = Programs.Count - 1;
             else
-            {
-                currentNumber--;
-            }
-            PlayMethod();
+                _currentNumber--;
+            Podcaster = null;
+            PlayMethodAsync();
         });
         /// <summary>
         /// 下
@@ -388,36 +325,13 @@ namespace QingTing.Fm.ViewModels
         {
             if (IsPlay)
             {
-                //currentNumber = currentNumber == Programs.Count ? 0 : currentNumber++;
-                if (currentNumber == Programs.Count - 1)
-                {
-                    currentNumber = 0;
-                }
+                if (_currentNumber == Channels.Podcasters.Count - 1)
+                    _currentNumber = 0;
                 else
-                {
-                    currentNumber++;
-                }
+                    _currentNumber++;
             }
-            PlayMethod(currentNumber);
-        });
-        public ICommand FetchMoreDataCommand => new DelegateCommand(obj =>
-        {
-            pageIndex++;
-            if (pageIndex >= pageCount)
-            {
-                Message = "已经没有更多了...";
-                LoadingShow();
-                return;
-            }
-            StartProgramTask(pageIndex);
-        });
-
-        /// <summary>
-        /// 点击页
-        /// </summary>
-        public ICommand NextPageCommand => new DelegateCommand(obj =>
-        {
-            StartProgramTask(PageIndexProperty);
+            Podcaster = null;
+            PlayMethodAsync();
         });
 
         #endregion
@@ -428,34 +342,13 @@ namespace QingTing.Fm.ViewModels
         /// </summary>
         private async void StartProgramTask(int page)
         {
-            IsLoginBusy = true;
             try
             {
-                if (page.Equals(1))
-                {
-                    Channels = http.GetChannels();
-                    //await Task.Delay(1000);
-                    programCount = Convert.ToInt32(Channels.ProgramCount);
-                    PageIndexProperty = 1;
-                    pageCount = programCount / 10;
-                    PageCountProperty = pageCount;
-                    Title = Channels.Name;
-                }
-                if (Programs != null && Programs.Count >0)
-                {
-                    ObservableCollection<ProgramsModel> list = await http.GetShowList(page);
-                    Programs = list;
-                }
-                else
-                {
-                    Programs = await http.GetShowList(page);
-                }
-                //System.Threading.Thread.Sleep(1000);
-                IsLoginBusy = false;
+                Channels = await HttpProgram.GetChannelsAsync(page);
+                Title = Channels.Name;
             }
             catch (Exception ex)
             {
-                IsLoginBusy = false;
             }
         }
         private void LoadingShow()
@@ -477,31 +370,33 @@ namespace QingTing.Fm.ViewModels
         /// <param name="eventArgs"></param>
         private void TimerOnTick(object sender, EventArgs eventArgs)
         {
-            if (reader != null)
+            if (_reader != null)
             {
-                sliderPosition = Math.Min(SliderMax, reader.Position * SliderMax / reader.Length);
-                CurrentTime = reader.CurrentTime.ToString((@"hh\:mm\:ss"));
+                _sliderPosition = Math.Min(SliderMax, _reader.Position * SliderMax / _reader.Length);
+                CurrentTime = _reader.CurrentTime.ToString((@"hh\:mm\:ss"));
                 OnPropertyChanged("SliderPosition");
             }
         }
 
-        private void PlayMethod(object obj = null)
+        private async Task PlayMethodAsync()
         {
-            if (obj != null)
+            if (Podcaster != null)
             {
-                currentNumber = (int)obj;
-                if (string.IsNullOrEmpty(Programs[currentNumber].FilePath))
+                if (string.IsNullOrEmpty(Podcaster.FilePath))
                 {
-                    Message = "此音频为付费音频，已跳过";
-                    LoadingShow();
-                    currentNumber++;
+                    Message.Push("此音频为付费音频，已跳过...", MessageBoxImage.Information);
+                    _currentNumber++;
                 }
             }
-            pModel = Programs[currentNumber];
+            else
+                Podcaster = Channels.Podcasters[_currentNumber];
+            if (Podcaster == null) return;
+            if (string.IsNullOrWhiteSpace(_lastTempFilePath))
+                await IconicThumbnail(Channels.ImageUrl);
             Stop();
-            Programs.All(y => { y.IsPlay = false; return true; });
-            Title = pModel.Name;
-            pModel.IsPlay = true;
+            Channels.Podcasters.All(y => { y.IsPlay = false; return true; });
+            Title = Podcaster.Name;
+            Podcaster.IsPlay = true;
             Play();
         }
 
@@ -511,57 +406,57 @@ namespace QingTing.Fm.ViewModels
         /// </summary>
         private void CreatePlayer()
         {
-            wavePlayer = new WaveOutEvent();
-            wavePlayer.PlaybackStopped += WavePlayerOnPlaybackStopped;
+            _wavePlayer = new WaveOutEvent();
+            _wavePlayer.PlaybackStopped += WavePlayerOnPlaybackStopped;
         }
         /// <summary>
         /// 播放
         /// </summary>
         private void Play()
         {
-            if (pModel == null)
+            try
             {
-                pModel = Programs[currentNumber];
+                if (Podcaster == null)
+                    return;
+                IsPlay = true;
+
+                if (_wavePlayer == null)
+                {
+                    CreatePlayer();
+                }
+                if (_lastPlayed != _inputPath && _reader != null)
+                {
+                    _reader.Dispose();
+                    _reader = null;
+                }
+                if (_reader == null)
+                {
+                    _reader = new MediaFoundationReader(Podcaster.FilePath);
+                    TotalTime = _reader.TotalTime.ToString((@"hh\:mm\:ss"));
+                    _lastPlayed = _inputPath;
+                    _wavePlayer.Init(_reader);
+                }
+                _wavePlayer.Play();
+                OnPropertyChanged("IsPlaying");
+                OnPropertyChanged("IsStopped");
+                _timer.Start();
             }
-            IsPlay = true;
-            //if (String.IsNullOrEmpty(InputPath))
-            //{
-            //    MessageBox.Show("Select a valid input file or URL first");
-            //    return;
-            //}
-            if (wavePlayer == null)
+            catch (Exception)
             {
-                CreatePlayer();
+                throw;
             }
-            if (lastPlayed != inputPath && reader != null)
-            {
-                reader.Dispose();
-                reader = null;
-            }
-            if (reader == null)
-            {
-                inputPath = string.Format("https://od.qingting.fm/{0}", pModel.FilePath);
-                reader = new MediaFoundationReader(inputPath);
-                TotalTime = reader.TotalTime.ToString((@"hh\:mm\:ss"));
-                lastPlayed = inputPath;
-                wavePlayer.Init(reader);
-            }
-            wavePlayer.Play();
-            OnPropertyChanged("IsPlaying");
-            OnPropertyChanged("IsStopped");
-            timer.Start();
         }
         /// <summary>
         /// 停止
         /// </summary>
         private void Stop()
         {
-            if (wavePlayer != null)
+            if (_wavePlayer != null)
             {
-                wavePlayer.Stop();
-                inputPath = null;
+                _wavePlayer.Stop();
+                _inputPath = null;
                 SliderPosition = 0;
-                timer.Stop();
+                _timer.Stop();
                 IsPlay = false;
             }
         }
@@ -570,38 +465,73 @@ namespace QingTing.Fm.ViewModels
         /// </summary>
         private void Pause()
         {
-            if (wavePlayer != null)
+            if (_wavePlayer != null)
             {
                 IsPlay = false;
-                wavePlayer.Pause();
+                _wavePlayer.Pause();
                 OnPropertyChanged("IsPlaying");
                 OnPropertyChanged("IsStopped");
             }
         }
         private void WavePlayerOnPlaybackStopped(object sender, StoppedEventArgs stoppedEventArgs)
         {
-            if (wavePlayer.PlaybackState == PlaybackState.Stopped)
+            if (_wavePlayer.PlaybackState == PlaybackState.Stopped)
             {
-                inputPath = null;
-                pModel.IsPlay = false;
+                _inputPath = null;
                 SliderPosition = 0;
-                timer.Stop();
+                _timer.Stop();
                 NextSongCommand.Execute(null);
             }
-            //if (reader != null)
-            //{
-            //    SliderPosition = 0;
-            //    timer.Stop();
-            //}
             if (stoppedEventArgs.Exception != null)
             {
-                MessageBox.Show(stoppedEventArgs.Exception.Message, "Error Playing File");
+                Message.Push("Error Playing File", MessageBoxImage.Error);
             }
             OnPropertyChanged("IsPlaying");
             OnPropertyChanged("IsStopped");
         }
 
+        async Task IconicThumbnail(string imageUrl)
+        {
+            if (_lastTempFilePath != null && File.Exists(_lastTempFilePath))
+            {
+                try
+                {
+                    File.Delete(_lastTempFilePath);
+                }
+                catch (Exception)
+                {
+                }
+            }
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return;
+            string tempFilePath = Path.GetTempFileName();
+            _lastTempFilePath = tempFilePath;
+            try
+            {
+                using (HttpClient client = new HttpClient())
+                {
+                    using (var response = await client.GetAsync(imageUrl))
+                    {
+                        response.EnsureSuccessStatusCode();
+                        using (var stream = await response.Content.ReadAsStreamAsync())
+                        using (var fileStream = File.Create(tempFilePath))
+                        {
+                            await stream.CopyToAsync(fileStream);
+                        }
+                    }
+                }
+                Application.Current.MainWindow.SetIconicThumbnail(tempFilePath);
+            }
+            catch (Exception)
+            {
+                if (File.Exists(tempFilePath))
+                    File.Delete(tempFilePath);
+            }
+            finally
+            {
+            }
+        }
+        
         #endregion
-
     }
 }

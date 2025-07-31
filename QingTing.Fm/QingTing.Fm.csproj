@@ -47,15 +47,6 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FreeMemoryGC">
-      <HintPath>..\Reference\FreeMemoryGC.dll</HintPath>
-    </Reference>
-    <Reference Include="MaterialDesignColors">
-      <HintPath>..\Reference\MaterialDesignColors.dll</HintPath>
-    </Reference>
-    <Reference Include="MaterialDesignThemes.Wpf">
-      <HintPath>..\Reference\MaterialDesignThemes.Wpf.dll</HintPath>
-    </Reference>
     <Reference Include="NAudio">
       <HintPath>..\Reference\NAudio.dll</HintPath>
     </Reference>
@@ -82,6 +73,9 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="WPFDevelopers, Version=1.1.0.3, Culture=neutral, PublicKeyToken=aacc48a71bd48519, processorArchitecture=MSIL">
+      <HintPath>..\packages\WPFDevelopers.1.1.0.3-preview6\lib\net46\WPFDevelopers.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -142,6 +136,7 @@
     </EmbeddedResource>
     <Resource Include="Fonts\Lato-Thin.ttf" />
     <Resource Include="Fonts\HelveticaNeueMed.ttf" />
+    <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

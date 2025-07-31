@@ -1,11 +1,4 @@
-﻿using FreeMemoryGC;
-using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
+﻿using System.Windows;
 
 namespace QingTing.Fm
 {
@@ -14,10 +7,16 @@ namespace QingTing.Fm
     /// </summary>
     public partial class App : Application
     {
-        
+        public static double Wdith
+        {
+            get { return SystemParameters.WorkArea.Width / 1.5; }
+        }
+        public static double Height
+        {
+            get { return SystemParameters.WorkArea.Height / 1.5; }
+        }
         protected override void OnStartup(StartupEventArgs e)
         {
-            ProjectCracker.Instance.Cracker();
             base.OnStartup(e);
         }
     }
