@@ -304,6 +304,7 @@ namespace QingTing.Fm.ViewModels
         /// </summary>
         public ICommand MouseDoubleCommand => new DelegateCommand(obj =>
         {
+            _currentNumber = Podcaster == null ? 0 : Podcaster.Sequence;
             PlayMethodAsync();
         });
         /// <summary>

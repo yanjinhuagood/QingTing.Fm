@@ -25,6 +25,11 @@ namespace QingTing.Fm.Models
         [JsonProperty("name")]
         public string Name { get; set; }
         /// <summary>
+        /// 序号
+        /// </summary>
+        [JsonProperty("sequence")]
+        public int Sequence { get; set; }
+        /// <summary>
         /// 持续时间
         /// </summary>
         [JsonProperty("duration")]
