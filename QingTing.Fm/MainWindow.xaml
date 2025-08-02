@@ -27,11 +27,60 @@
             <converter:PayFromVisibilityConverter x:Key="PayFromVisibilityConverter" />
             <converter:PlayFalseFromVisibilityConverter x:Key="PlayFalseFromVisibilityConverter" />
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <Style BasedOn="{StaticResource WD.DefaultGridViewColumnHeader}" TargetType="{x:Type GridViewColumnHeader}">
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
     <Window.DataContext>
         <viewModel:HomeViewModel />
     </Window.DataContext>
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding OnLoaded}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo
+            x:Name="TaskbarItemInfo"
+            Description="WPFDevelopers"
+            ThumbnailClipMargin="0">
+            <TaskbarItemInfo.ThumbButtonInfos>
+                <ThumbButtonInfoCollection>
+                    <ThumbButtonInfo
+                        x:Name="stopButton"
+                        Command="{Binding SkipSongCommand}"
+                        Description="上一首"
+                        DismissWhenClicked="False"
+                        ImageSource="{StaticResource PreviousIcon}"
+                        IsInteractive="True" />
+                    <ThumbButtonInfo
+                        x:Name="playButton"
+                        Command="{Binding PlayCommand}"
+                        Description="播放"
+                        DismissWhenClicked="False"
+                        ImageSource="{StaticResource PlayIcon}"
+                        IsInteractive="True"
+                        Visibility="{Binding IsPlay, Converter={StaticResource PlayFalseFromVisibilityConverter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ThumbButtonInfo
+                        x:Name="pauseButton"
+                        Command="{Binding PauseCommand}"
+                        Description="暂停"
+                        DismissWhenClicked="False"
+                        ImageSource="{StaticResource PauseIcon}"
+                        IsInteractive="True"
+                        Visibility="{Binding IsPlay, Converter={StaticResource BooleanToVisibilityConverter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <ThumbButtonInfo
+                        x:Name="NextButton"
+                        Command="{Binding NextSongCommand}"
+                        Description="下一首"
+                        DismissWhenClicked="False"
+                        ImageSource="{StaticResource NextIcon}"
+                        IsInteractive="True" />
+                </ThumbButtonInfoCollection>
+            </TaskbarItemInfo.ThumbButtonInfos>
+        </TaskbarItemInfo>
+    </Window.TaskbarItemInfo>
     <Grid Background="{DynamicResource HomeGreenBrush}">
         <wd:WDScrollViewer IsScrollAnimation="True">
             <Grid Margin="20,20,10,20" Background="{DynamicResource WD.BackgroundBrush}">
@@ -46,10 +95,6 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <Image Margin="8,0" Source="pack://application:,,,/QingTing.Fm;component/Images/logo_otherpage.png" />
-                    <Viewbox
-                        Grid.Column="0"
-                        Grid.ColumnSpan="3"
-                        Margin="5" />
                 </Grid>
                 <Border
                     Grid.Row="1"
@@ -70,13 +115,20 @@
                                 <ColumnDefinition />
                             </Grid.ColumnDefinitions>
                             <Image
+                                x:Name="ImageAvatar"
                                 Grid.RowSpan="4"
                                 Grid.Column="0"
                                 Width="170"
                                 Height="170"
                                 Margin="0,0,15,15"
                                 HorizontalAlignment="Left"
-                                Source="{Binding Channels.ImageUrl}" />
+                                Source="{Binding Channels.ImageUrl}">
+                                <i:Interaction.Triggers>
+                                    <i:EventTrigger EventName="LayoutUpdated">
+                                        <i:InvokeCommandAction Command="{Binding OnLayoutUpdated}" />
+                                    </i:EventTrigger>
+                                </i:Interaction.Triggers>
+                            </Image>
                             <TextBlock
                                 Grid.Row="0"
                                 Grid.Column="1"
@@ -117,12 +169,15 @@
                                 Grid.Column="1"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Top">
-                                <Button Width="120" Height="35">
+                                <Button
+                                    Width="120"
+                                    Height="35"
+                                    Style="{StaticResource WD.DangerPrimaryButton}">
                                     <StackPanel Orientation="Horizontal">
                                         <wd:PathIcon
-                                            Width="20"
-                                            Height="20"
-                                            Data="M342 214l468 298-468 298v-596z" />
+                                            Width="15"
+                                            Height="15"
+                                            Data="{StaticResource PlayGeometry}" />
                                         <TextBlock
                                             Margin="5,0,0,0"
                                             VerticalAlignment="Center"
@@ -165,6 +220,7 @@
                         </Grid>
                         <ListView
                             x:Name="listView"
+                            HorizontalContentAlignment="Center"
                             ItemsSource="{Binding Channels.Podcasters}"
                             PreviewMouseWheel="ListView_PreviewMouseWheel"
                             SelectedItem="{Binding Podcaster}">
@@ -201,7 +257,10 @@
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
                                     <GridViewColumn DisplayMemberBinding="{Binding Duration, Converter={StaticResource DurationFromTimeConverter}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Header="时长" />
-                                    <GridViewColumn DisplayMemberBinding="{Binding PlayCount}" Header="播放量" />
+                                    <GridViewColumn
+                                        Width="60"
+                                        DisplayMemberBinding="{Binding PlayCount}"
+                                        Header="播放量" />
                                     <GridViewColumn DisplayMemberBinding="{Binding UpdateTime}" Header="更新时间" />
                                 </GridView>
                             </ListView.View>
@@ -240,7 +299,7 @@
                     <wd:PathIcon
                         Width="15"
                         Height="15"
-                        Data="M406 512l362-256v512zM256 256h86v512h-86v-512z" />
+                        Data="{StaticResource PreviousGeometry}" />
                 </Button>
                 <Button
                     Width="40"
@@ -252,7 +311,7 @@
                     <wd:PathIcon
                         Width="15"
                         Height="15"
-                        Data="M342 214l468 298-468 298v-596z" />
+                        Data="{StaticResource PlayGeometry}" />
                 </Button>
                 <Button
                     Width="40"
@@ -264,7 +323,7 @@
                     <wd:PathIcon
                         Width="15"
                         Height="15"
-                        Data="M598 214h170v596h-170v-596zM256 810v-596h170v596h-170z" />
+                        Data="{StaticResource PauseGeometry}" />
                 </Button>
                 <Button
                     Width="40"
@@ -275,7 +334,7 @@
                     <wd:PathIcon
                         Width="15"
                         Height="15"
-                        Data="M682 256h86v512h-86v-512zM256 768v-512l362 256z" />
+                        Data="{StaticResource NextGeometry}" />
                 </Button>
             </StackPanel>
             <Grid

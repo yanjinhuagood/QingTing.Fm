@@ -14,6 +14,7 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using WPFDevelopers.Controls;
 using WPFDevelopers.Helpers;
+using WPFDevelopers.Net45x;
 
 namespace QingTing.Fm.ViewModels
 {
@@ -32,6 +33,7 @@ namespace QingTing.Fm.ViewModels
         private double _sliderPosition;
         private int _currentNumber = 0;
         private string _lastTempFilePath = null;
+        private bool _isThumbnail = true;
         #endregion
 
         #region 构造函数
@@ -40,7 +42,6 @@ namespace QingTing.Fm.ViewModels
             _timer = new DispatcherTimer();
             _timer.Interval = TimeSpan.FromMilliseconds(500);
             _timer.Tick += TimerOnTick;
-            StartProgramTask(1);
         }
 
         #endregion
@@ -217,10 +218,10 @@ namespace QingTing.Fm.ViewModels
         public int Count
         {
             get { return _count; }
-            set 
-            { 
-                _count = value; 
-                OnPropertyChanged(nameof(Count));  
+            set
+            {
+                _count = value;
+                OnPropertyChanged(nameof(Count));
             }
         }
 
@@ -228,9 +229,9 @@ namespace QingTing.Fm.ViewModels
         public int CountPerPage
         {
             get { return _countPerPage; }
-            set 
-            { 
-                _countPerPage = value; 
+            set
+            {
+                _countPerPage = value;
                 OnPropertyChanged(nameof(CountPerPage));
             }
         }
@@ -239,9 +240,9 @@ namespace QingTing.Fm.ViewModels
         public int Current
         {
             get { return _current; }
-            set 
-            { 
-                _current = value; 
+            set
+            {
+                _current = value;
                 OnPropertyChanged(nameof(Current));
                 StartProgramTask(Current);
             }
@@ -251,28 +252,32 @@ namespace QingTing.Fm.ViewModels
 
         #region 命令 
 
-        /// <summary>
-        /// 最小化操作
-        /// </summary>    
-        public ICommand MinimizeCommand => new DelegateCommand(obj =>
+
+        public ICommand OnLoaded => new DelegateCommand(obj =>
         {
-            App.Current.MainWindow.WindowState = WindowState.Minimized;
-        });
-        /// <summary>
-        /// 最大化or还原操作
-        /// </summary>    
-        public ICommand MaximizeCommand => new DelegateCommand(obj =>
-        {
-            if (App.Current.MainWindow.WindowState == WindowState.Maximized)
-            {
-                App.Current.MainWindow.WindowState = WindowState.Normal;
-            }
-            else
-            {
-                App.Current.MainWindow.WindowState = WindowState.Maximized;
-            }
+            StartProgramTask(1);
 
         });
+
+        public ICommand OnLayoutUpdated => new DelegateCommand(obj =>
+        {
+            if (_isThumbnail) return;
+            var window = Application.Current.MainWindow as MainWindow;
+            if (window != null)
+            {
+                if (window.ImageAvatar.ActualWidth == 0)
+                    return;
+                var point = window.ImageAvatar.TranslatePoint(new Point(0, 0), window);
+                var left = point.X;
+                var top = point.Y;
+                var right = window.ActualWidth - window.ImageAvatar.ActualWidth - left;
+                var bottom = window.ActualHeight - window.ImageAvatar.ActualHeight - top;
+                window.TaskbarItemInfo.ThumbnailClipMargin = new Thickness(left, top, right, bottom);
+                _isThumbnail = true;
+            }
+        });
+
+
         /// <summary>
         /// 关闭操作
         /// </summary>    
@@ -281,6 +286,7 @@ namespace QingTing.Fm.ViewModels
             Stop();
             App.Current.MainWindow.Close();
         });
+
 
         /// <summary>
         /// 播放
@@ -394,11 +400,19 @@ namespace QingTing.Fm.ViewModels
             if (Podcaster == null) return;
             if (string.IsNullOrWhiteSpace(_lastTempFilePath))
                 await IconicThumbnail(Channels.ImageUrl);
-            Stop();
             Channels.Podcasters.All(y => { y.IsPlay = false; return true; });
             Title = Podcaster.Name;
             Podcaster.IsPlay = true;
-            Play();
+            if (_wavePlayer != null && _wavePlayer.PlaybackState == PlaybackState.Paused)
+            {
+                IsPlay = true;
+                _wavePlayer.Play();
+            }
+            else
+            {
+                Stop();
+                Play();
+            }
         }
 
         //https://od.qingting.fm/m4a/5a83b6a87cb89146f0e31f5a_8746252_64.m4a   m4a/5a78127c7cb89146f209c84f_8688485_64.m4a
@@ -522,6 +536,16 @@ namespace QingTing.Fm.ViewModels
                     }
                 }
                 Application.Current.MainWindow.SetIconicThumbnail(tempFilePath);
+                //var state = Application.Current.MainWindow.WindowState;
+                //if (state != WindowState.Minimized)
+                //{
+                //    Application.Current.MainWindow.WindowState = WindowState.Minimized;
+                //    Application.Current.MainWindow.WindowState = state;
+                //}
+                //var temp = Application.Current.MainWindow.TaskbarItemInfo;
+                //Application.Current.MainWindow.TaskbarItemInfo = null;
+                //Application.Current.MainWindow.TaskbarItemInfo = temp;
+                //Application.Current.MainWindow.TaskbarItemInfo.Overlay = new BitmapImage(new Uri(_lastTempFilePath, UriKind.Absolute));
             }
             catch (Exception)
             {
@@ -532,7 +556,7 @@ namespace QingTing.Fm.ViewModels
             {
             }
         }
-        
+
         #endregion
     }
 }

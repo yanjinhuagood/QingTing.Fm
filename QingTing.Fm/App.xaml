@@ -31,6 +31,30 @@
                     </Setter.Value>
                 </Setter>
             </Style>
+            <Geometry x:Key="PlayGeometry">M342 214l468 298-468 298v-596z</Geometry>
+            <Geometry x:Key="PauseGeometry">M598 214h170v596h-170v-596zM256 810v-596h170v596h-170z</Geometry>
+            <Geometry x:Key="NextGeometry">M682 256h86v512h-86v-512zM256 768v-512l362 256z</Geometry>
+            <Geometry x:Key="PreviousGeometry">M406 512l362-256v512zM256 256h86v512h-86v-512z</Geometry>
+            <DrawingImage x:Key="PlayIcon">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="White" Geometry="{StaticResource PlayGeometry}" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="PauseIcon">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="White" Geometry="{StaticResource PauseGeometry}" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="NextIcon">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="White" Geometry="{StaticResource NextGeometry}" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
+            <DrawingImage x:Key="PreviousIcon">
+                <DrawingImage.Drawing>
+                    <GeometryDrawing Brush="White" Geometry="{StaticResource PreviousGeometry}" />
+                </DrawingImage.Drawing>
+            </DrawingImage>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

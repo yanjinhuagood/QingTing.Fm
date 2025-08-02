@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using QingTing.Fm.Utility;
+using System;
 using System.Collections.ObjectModel;
 
 namespace QingTing.Fm.Models
@@ -42,6 +43,8 @@ namespace QingTing.Fm.Models
         {
             get
             {
+                long t = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                //return $"https://audio.qtfm.cn/audiostream/redirect/239329/{Id}?access_token=&device_id=MOBILESITE&qingting_id=&t={t}&sign=5ee6829dd3d72d212860fd6771d13158";
                 return $"https://audio.qtfm.cn/audiostream/redirect/239329/{Id}?access_token=&device_id=MOBILESITE&qingting_id=&t=1753885375531&sign=5ee6829dd3d72d212860fd6771d13158";
             }
         }
