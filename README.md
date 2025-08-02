@@ -8,6 +8,11 @@
 # <h4>[下载地址](https://github.com/yanjinhuagood/QingTing.Fm/releases/download/1.0.0/QingTing.FMexe.rar)</h4>
 声明：本项目谥在学习，任何用于违法用途的行为与作者无关。<br/>
 <h3>效果</h3>  
+
+
+https://github.com/user-attachments/assets/06eca27c-83ce-481c-90a5-6d4a89227069
+
+
 <img src="/resourcesImage/qingtingfm.gif"/>
 
 ### [自定义高级控件](https://github.com/WPFDevelopersOrg/WPFDevelopers) https://github.com/WPFDevelopersOrg/WPFDevelopers  
