@@ -354,7 +354,7 @@
                 <Slider
                     Grid.Column="1"
                     Margin="10,0"
-                    wd:ElementHelper.CornerRadius="10"
+                    wd:ElementHelper.CornerRadius="3"
                     IsMoveToPointEnabled="True"
                     Value="{Binding SliderPosition, Mode=TwoWay}" />
                 <TextBlock Grid.Column="2" Text="{Binding TotalTime}" />
