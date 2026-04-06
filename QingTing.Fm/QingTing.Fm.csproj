@@ -166,7 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="WPFDevelopers">
-      <Version>0.0.0.2</Version>
+      <Version>0.0.0.3-rc.1</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

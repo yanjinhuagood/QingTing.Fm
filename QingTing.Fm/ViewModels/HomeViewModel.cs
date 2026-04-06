@@ -391,7 +391,7 @@ namespace QingTing.Fm.ViewModels
             {
                 if (string.IsNullOrEmpty(Podcaster.FilePath))
                 {
-                    Message.Push("此音频为付费音频，已跳过...", MessageBoxImage.Information);
+                    Toast.Push("此音频为付费音频，已跳过...", ToastImage.Info);
                     _currentNumber++;
                 }
             }
@@ -499,7 +499,7 @@ namespace QingTing.Fm.ViewModels
             }
             if (stoppedEventArgs.Exception != null)
             {
-                Message.Push("Error Playing File", MessageBoxImage.Error);
+                Toast.Push("Error Playing File", ToastImage.Error);
             }
             OnPropertyChanged("IsPlaying");
             OnPropertyChanged("IsStopped");
